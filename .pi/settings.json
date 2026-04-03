@@ -1,0 +1,4 @@
+{
+  "quietStartup": false,
+  "extensions": [".pi/extensions/read-docs.ts"]
+}

@@ -2,35 +2,87 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { registerSW } from "virtual:pwa-register";
-// Import the generated route tree
-import { routeTree } from "./routeTree.gen";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
-
-// Create a new router instance
-const router = createRouter({ routeTree });
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { ToastProvider } from "./components/Toast";
+import { Home } from "./pages/Home";
+import { Workouts } from "./pages/Workouts";
+import { WorkoutDetail } from "./pages/WorkoutDetail";
+import { Progress } from "./pages/Progress";
 
 const queryClient = new QueryClient();
 
-// add this to prompt for a refresh
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm("New content available. Reload?")) {
-      updateSW(true);
-    }
-  },
-});
+// Bottom Navigation Component - stays static
+const BottomNav: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    if (path === "/" && location.pathname === "/") return true;
+    if (path === "/workouts" && location.pathname.startsWith("/workouts")) return true;
+    if (path === "/progress" && location.pathname === "/progress") return true;
+    return false;
+  };
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <div className="max-w-lg mx-auto flex justify-around py-3">
+        <button
+          onClick={() => navigate("/")}
+          className={`flex flex-col items-center ${
+            isActive("/") ? "text-blue-600" : "text-gray-400"
+          }`}
+        >
+          <span className="text-xl">🏠</span>
+          <span className="text-xs mt-1">Home</span>
+        </button>
+        <button
+          onClick={() => navigate("/workouts")}
+          className={`flex flex-col items-center ${
+            isActive("/workouts") ? "text-blue-600" : "text-gray-400"
+          }`}
+        >
+          <span className="text-xl">🏋️</span>
+          <span className="text-xs mt-1">Workouts</span>
+        </button>
+        <button
+          onClick={() => navigate("/progress")}
+          className={`flex flex-col items-center ${
+            isActive("/progress") ? "text-blue-600" : "text-gray-400"
+          }`}
+        >
+          <span className="text-xl">📊</span>
+          <span className="text-xs mt-1">Progress</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Layout component with bottom nav
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-gray-100 pb-16">
+      {children}
+      <BottomNav />
+    </div>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <ToastProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/workouts" element={<Workouts />} />
+              <Route path="/workouts/:type" element={<WorkoutDetail />} />
+              <Route path="/progress" element={<Progress />} />
+            </Routes>
+          </Layout>
+        </ToastProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </React.StrictMode>
 );
