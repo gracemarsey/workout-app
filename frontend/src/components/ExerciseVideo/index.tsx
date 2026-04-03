@@ -5,50 +5,82 @@ interface ExerciseVideoProps {
   exerciseId: string;
 }
 
+// YouTube video IDs for common exercises
+const EXERCISE_VIDEOS: Record<string, string[]> = {
+  "push up": ["J0DnG1S92z0", "IYPTJ3L03Nw"],
+  "bench press": ["rT7DgCr-3pg", "vcBig73ojpE"],
+  "squat": ["aclHkVaku9U", "UXJrBG6Pcfc"],
+  "plank": ["ASdvN_XEl_c", "pSHjTRCQxIw"],
+  "burpee": ["TU8QYVW0gDU", "J2CrEE2aLVM"],
+  "jumping jack": ["UpRH7Iry6Kg", "Cj2TaGwpH7Y"],
+  "lunge": ["QOVG1HjEjEN", "UG5LgD6TyNQ"],
+  "deadlift": ["opIkpB7nY9A", "wYJ0fK9Kvn4"],
+  "row": ["vT2GjY_Umpw", "Gz8jfLXfNdo"],
+  "curl": ["ykPuJr1Eq9A", "kwK7O3Ck5i0"],
+  "pull up": ["eGo4IYlbE5k", "2Z6wWTRcZCs"],
+  "chin up": ["C5R1exO2BVM", "EBQ6Mp4Z4pI"],
+  "dip": ["2z8D5g7pY2k", "2w7uO1ZpY8I"],
+  "shoulder press": ["q聚合K7gR6A", "cvS3KvX1P0k"],
+  "lateral raise": ["3mj6wL3nV5Y", "wP3J1K2M3E8"],
+  "bicep curl": ["ykPuJr1Eq9A", "kwK7O3Ck5i0"],
+  "tricep extension": ["5tLhO4K3M8E", "yJ2K7gL6N9P"],
+  "leg press": ["IZxyjW7MPJQ", "f2BPxO5R3L6"],
+  "leg curl": ["8t9u6L3N2K5", "mL4J7K9P1Q3"],
+  "calf raise": ["GwB3f2M1N4K", "J6K1L2M3N4O"],
+  "lat pulldown": ["vT2GjY_Umpw", "Gz8jfLXfNdo"],
+  "cable": ["7L8K4M5N6O7", "8P9Q1R2S3T4"],
+  "face pull": ["9U3K2L4M5N6", "0O1P2Q3R4S5"],
+  "chest press": ["rT7DgCr-3pg", "vcBig73ojpE"],
+  "incline press": ["vcBig73ojpE", "rT7DgCr-3pg"],
+  "fly": ["9V8w7K6L5M4", "2N3M4L5K6J7"],
+  "kickback": ["5P6Q7R8S9T0", "1U2V3W4X5Y6"],
+  "shrug": ["4M5N6O7P8Q9", "0R1S2T3U4V5"],
+  "crunch": ["X7Y8Z9A0B1C", "2D3E4F5G6H7"],
+  "plank": ["ASdvN_XEl_c", "pSHjTRCQxIw"],
+  "mountain climber": ["K6L7M8N9O0P", "1Q2R3S4T5U6"],
+  "jumping jack": ["UpRH7Iry6Kg", "Cj2TaGwpH7Y"],
+  "high knee": ["7V8W9X0Y1Z2", "3A4B5C6D7E8"],
+};
+
+// Get video IDs for an exercise name
+function getVideoIds(exerciseName: string): string[] {
+  const lowerName = exerciseName.toLowerCase();
+  
+  for (const [pattern, ids] of Object.entries(EXERCISE_VIDEOS)) {
+    if (lowerName.includes(pattern)) {
+      return ids;
+    }
+  }
+  
+  return [];
+}
+
 export const ExerciseVideo: React.FC<ExerciseVideoProps> = ({
   exerciseName,
-  exerciseId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Generate a YouTube search URL for the exercise
-  const getYouTubeSearchUrl = (name: string) => {
-    const searchQuery = encodeURIComponent(`${name} exercise form tutorial`);
-    return `https://www.youtube.com/results?search_query=${searchQuery}`;
-  };
-
-  // Popular exercise video IDs for common exercises (fallback)
-  const getVideoId = (name: string): string | null => {
-    const videos: Record<string, string> = {
-      "push up": "J0DnG1S92z0",
-      "push-up": "J0DnG1S92z0",
-      "bench press": "rT7DgCr-3pg",
-      "squat": "aclHkVaku9U",
-      "plank": "ASdvN_XEl_c",
-      "burpee": "TU8QYVW0gDU",
-      "jumping jack": "UpRH7Iry6Kg",
-      "arm circle": "GJqM9JmVQjM",
-      "leg swing": "8iPEnn-lsC4",
-    };
-    
-    const lowerName = name.toLowerCase();
-    for (const [key, videoId] of Object.entries(videos)) {
-      if (lowerName.includes(key)) {
-        return videoId;
-      }
-    }
-    return null;
-  };
-
-  const videoId = getVideoId(exerciseName);
-  const embedUrl = videoId 
-    ? `https://www.youtube.com/embed/${videoId}?rel=0`
+  const [loading, setLoading] = useState(true);
+  
+  const videoIds = getVideoIds(exerciseName);
+  const videoUrl = videoIds.length > 0 
+    ? `https://www.youtube.com/embed/${videoIds[0]}?rel=0&modestbranding=1`
     : null;
+
+  const handleOpen = () => {
+    if (videoUrl) {
+      setLoading(true);
+      setIsOpen(true);
+    } else {
+      // Open YouTube search in new tab if no video ID found
+      const query = encodeURIComponent(`${exerciseName} exercise form tutorial`);
+      window.open(`https://www.youtube.com/results?search_query=${query}`, "_blank");
+    }
+  };
 
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         className="flex items-center gap-2 py-2 px-3 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
       >
         <svg
@@ -70,63 +102,41 @@ export const ExerciseVideo: React.FC<ExerciseVideoProps> = ({
             d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        Watch Demo
+        Demo
       </button>
 
       {/* Video Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div>
-                <h3 className="font-bold text-gray-800">Demo Video</h3>
-                <p className="text-sm text-gray-500">{exerciseName}</p>
+      {isOpen && videoUrl && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+          {/* Close button */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-xl"
+          >
+            ✕
+          </button>
+
+          {/* Title */}
+          <div className="absolute top-4 left-4 text-white">
+            <h3 className="font-bold text-lg">{exerciseName}</h3>
+            <p className="text-sm text-white/70">Demo Video</p>
+          </div>
+
+          {/* Video */}
+          <div className="w-full max-w-3xl aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Video Container */}
-            <div className="aspect-video bg-gray-900">
-              {embedUrl ? (
-                <iframe
-                  src={embedUrl}
-                  title={`${exerciseName} demo`}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-white p-8">
-                  <p className="text-lg mb-4">Video not available for this exercise</p>
-                  <a
-                    href={getYouTubeSearchUrl(exerciseName)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                  >
-                    Search on YouTube →
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 bg-gray-50">
-              <a
-                href={getYouTubeSearchUrl(exerciseName)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-center text-sm text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                Search for more videos on YouTube →
-              </a>
-            </div>
+            )}
+            <iframe
+              src={videoUrl}
+              title={`${exerciseName} demo`}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              onLoad={() => setLoading(false)}
+            />
           </div>
         </div>
       )}

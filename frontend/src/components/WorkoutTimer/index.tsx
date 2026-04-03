@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 interface WorkoutTimerProps {
   state: "idle" | "running" | "paused" | "completed";
@@ -7,7 +7,6 @@ interface WorkoutTimerProps {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
-  onTick: () => void;
 }
 
 export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({
@@ -17,19 +16,34 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({
   onPause,
   onResume,
   onStop,
-  onTick,
 }) => {
+  const [displaySeconds, setDisplaySeconds] = useState(elapsedSeconds);
+  const startTimeRef = useRef<number | null>(null);
+  const accumulatedRef = useRef(0);
+
+  // Sync with prop when not running
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-
-    if (state === "running") {
-      interval = setInterval(onTick, 1000);
+    if (state !== "running") {
+      setDisplaySeconds(elapsedSeconds);
+      accumulatedRef.current = elapsedSeconds;
     }
+  }, [elapsedSeconds, state]);
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [state, onTick]);
+  // Start interval when running
+  useEffect(() => {
+    if (state === "running") {
+      startTimeRef.current = Date.now();
+      accumulatedRef.current = elapsedSeconds;
+      
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = startTimeRef.current ? Math.floor((now - startTimeRef.current) / 1000) : 0;
+        setDisplaySeconds(accumulatedRef.current + elapsed);
+      }, 100);
+
+      return () => clearInterval(interval);
+    }
+  }, [state]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -40,7 +54,7 @@ export const WorkoutTimer: React.FC<WorkoutTimerProps> = ({
   return (
     <div className="flex items-center gap-4">
       <div className="bg-gray-900 text-green-400 font-mono text-2xl px-4 py-2 rounded-lg">
-        {formatTime(elapsedSeconds)}
+        {formatTime(displaySeconds)}
       </div>
 
       <div className="flex gap-2">

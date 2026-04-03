@@ -11,7 +11,18 @@ import { Progress } from "./pages/Progress";
 
 const queryClient = new QueryClient();
 
-// Bottom Navigation Component - stays static
+// Scroll to top on route change
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+  
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+};
+
+// Bottom Navigation Component
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,11 +34,16 @@ const BottomNav: React.FC = () => {
     return false;
   };
 
+  const handleNav = (path: string) => {
+    window.scrollTo(0, 0);
+    navigate(path);
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-safe">
       <div className="max-w-lg mx-auto flex justify-around py-3">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => handleNav("/")}
           className={`flex flex-col items-center ${
             isActive("/") ? "text-blue-600" : "text-gray-400"
           }`}
@@ -36,7 +52,7 @@ const BottomNav: React.FC = () => {
           <span className="text-xs mt-1">Home</span>
         </button>
         <button
-          onClick={() => navigate("/workouts")}
+          onClick={() => handleNav("/workouts")}
           className={`flex flex-col items-center ${
             isActive("/workouts") ? "text-blue-600" : "text-gray-400"
           }`}
@@ -45,7 +61,7 @@ const BottomNav: React.FC = () => {
           <span className="text-xs mt-1">Workouts</span>
         </button>
         <button
-          onClick={() => navigate("/progress")}
+          onClick={() => handleNav("/progress")}
           className={`flex flex-col items-center ${
             isActive("/progress") ? "text-blue-600" : "text-gray-400"
           }`}
@@ -73,6 +89,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ToastProvider>
+          <ScrollToTop />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />

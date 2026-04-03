@@ -12,7 +12,11 @@ server.register(jwt, {
   secret: "ArcticLegoHuskySquaredle",
 });
 
-server.register(cors);
+// Enable CORS for mobile access
+server.register(cors, {
+  origin: true,
+  credentials: true,
+});
 
 // Ensure demo user exists
 async function ensureDemoUser() {
