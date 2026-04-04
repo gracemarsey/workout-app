@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { WorkoutExercise } from "../../queries/types";
 import { DismissModal } from "../DismissModal";
-import { ExerciseVideo } from "../ExerciseVideo";
 
 interface ExerciseItemProps {
   exercise: WorkoutExercise;
@@ -142,15 +141,12 @@ export const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
           <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
             {!exercise.isWarmup && !exercise.isCooldown && (
-              <>
-                <ExerciseVideo exerciseName={exercise.name} exerciseId={exercise.exerciseId} />
-                <button
-                  onClick={() => setShowInstructions(!showInstructions)}
-                  className="flex-1 py-2 px-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  {showInstructions ? "Hide" : "Show"} Instructions
-                </button>
-              </>
+              <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                className="flex-1 py-2 px-3 text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                {showInstructions ? "Hide" : "Show"} Instructions
+              </button>
             )}
             <button
               onClick={() => setShowDismissModal(true)}
