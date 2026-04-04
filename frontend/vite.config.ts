@@ -30,11 +30,12 @@ export default defineConfig({
     }),
   ],
   server: {
+    allowedHosts: ["workout.tombrace.co.uk"],
     host: "0.0.0.0",
-    port: 7232,
+    port: 9204,
   },
   preview: {
     host: "0.0.0.0",
-    port: 7232,
+    port: 9204,
   },
 });

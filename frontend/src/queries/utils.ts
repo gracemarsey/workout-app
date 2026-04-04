@@ -10,11 +10,11 @@ const getApiBaseUrl = () => {
   // Check if we're accessing via network IP (not localhost)
   const host = window.location.hostname;
   if (host !== "localhost" && host !== "127.0.0.1") {
-    return `http://${host}:7231`;
+    return `http://${host}:9205`;
   }
   
   // Default to localhost for local development
-  return "http://localhost:7231";
+  return "http://localhost:9205";
 };
 
 export const apiRequest = async <T>(

@@ -3,6 +3,7 @@
 ## Overview
 
 This is a monorepo template for a full-stack web application using:
+
 - **Frontend**: React 18 + TypeScript + Vite + TailwindCSS v3
 - **Backend**: Fastify + TypeScript + Drizzle ORM + SQLite
 - **PWA**: Service worker support for offline capability
@@ -19,7 +20,7 @@ workout-app/
 │   │   ├── router/       # Fastify route definitions
 │   │   ├── index.ts      # Database connection
 │   │   └── migrate.ts    # Migration runner
-│   ├── index.ts          # Server entry point (port 7231)
+│   ├── index.ts          # Server entry point (port 9205)
 │   └── drizzle.config.ts # Drizzle configuration
 │
 ├── frontend/             # React SPA
@@ -41,6 +42,7 @@ workout-app/
 ## Tech Stack Details
 
 ### Frontend
+
 - **React 18** with TypeScript
 - **Vite** for build tooling
 - **TailwindCSS v3** for styling
@@ -51,6 +53,7 @@ workout-app/
 - **Ladle** for component storybook
 
 ### Backend
+
 - **Fastify** web framework
 - **Drizzle ORM** with SQLite driver
 - **Better-SQLite3** as the database
@@ -60,30 +63,37 @@ workout-app/
 ## Getting Started
 
 ### 1. Install Dependencies
+
 ```bash
 npm run install-all
 ```
 
 ### 2. Set Up Database
+
 ```bash
 cd backend
 npm run migrate
 ```
 
 ### 3. Run Development Servers
+
 ```bash
 npm run dev
 ```
+
 This starts:
-- Frontend on http://localhost:5173
-- Backend on http://localhost:7231
+
+- Frontend on http://localhost:9204
+- Backend on http://localhost:9205
 
 ### 4. Run in Production (with PM2)
+
 ```bash
 npm run start
 ```
 
 ### 5. Stop Production
+
 ```bash
 npm run stop
 ```
@@ -91,18 +101,23 @@ npm run stop
 ## Database
 
 ### Schema
+
 Currently includes a `users` table:
+
 - `username` (text, unique, required)
 - `password` (text, required)
 
 ### Migrations
+
 Generate new migration:
+
 ```bash
 cd backend
 npm run migration
 ```
 
 Apply migrations:
+
 ```bash
 npm run migrate
 ```
@@ -110,6 +125,7 @@ npm run migrate
 ## API Routes
 
 The backend exposes routes under `/api`:
+
 - `GET /api/users/:id` - Get user by ID
 - `GET /api/users/me` - Get current user (JWT required)
 - `POST /api/users/register` - Register new user
@@ -118,26 +134,30 @@ The backend exposes routes under `/api`:
 ## Frontend Structure
 
 ### Components
+
 - `/components/Button/` - Example component with stories
 
 ### Pages
+
 - `/pages/Home/` - Home page
 
 ### Queries
+
 - `useLoginUser` - Login mutation hook
 - `useRegisterUser` - Registration mutation hook
 - `useGetMe` - Get current user hook
 - `useGetUser` - Get user by ID hook
 
 ### State (Zustand)
+
 - `useUserStore` - Token storage with persistence
 
 ## Scripts Reference
 
-| Script | Description |
-|--------|-------------|
-| `npm run install-all` | Install all dependencies |
-| `npm run dev` | Run both frontend and backend in dev mode |
-| `npm run start` | Start both apps in production with PM2 |
-| `npm run stop` | Stop PM2 processes |
-| `npm run restart` | Pull, stop, and restart |
+| Script                | Description                               |
+| --------------------- | ----------------------------------------- |
+| `npm run install-all` | Install all dependencies                  |
+| `npm run dev`         | Run both frontend and backend in dev mode |
+| `npm run start`       | Start both apps in production with PM2    |
+| `npm run stop`        | Stop PM2 processes                        |
+| `npm run restart`     | Pull, stop, and restart                   |

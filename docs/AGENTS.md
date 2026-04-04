@@ -6,7 +6,7 @@ This is the **workout-app** project - a full-stack web application template.
 
 - **Frontend**: React 18 + TypeScript + Vite + TailwindCSS v3
 - **Backend**: Fastify + TypeScript + Drizzle ORM + SQLite
-- **Ports**: Frontend (5173), Backend (7231)
+- **Ports**: Frontend (9204), Backend (9205)
 
 ## Quick Start
 

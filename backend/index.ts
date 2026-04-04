@@ -20,12 +20,18 @@ server.register(cors, {
 
 // Ensure demo user exists
 async function ensureDemoUser() {
-  const existing = db.select().from(users).where(eq(users.username, "demo_user")).get();
+  const existing = db
+    .select()
+    .from(users)
+    .where(eq(users.username, "demo_user"))
+    .get();
   if (!existing) {
-    db.insert(users).values({
-      username: "demo_user",
-      password: "demo_password",
-    }).run();
+    db.insert(users)
+      .values({
+        username: "demo_user",
+        password: "demo_password",
+      })
+      .run();
     console.log("Created demo_user");
   }
 }
@@ -37,7 +43,7 @@ ensureDemoUser().then(() => {
   server.listen(
     {
       host: "0.0.0.0",
-      port: 7231,
+      port: 9205,
     },
     (err, address) => {
       if (err) {
