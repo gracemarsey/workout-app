@@ -10,7 +10,7 @@ const getApiBaseUrl = () => {
   // Check if we're accessing via network IP (not localhost)
   const host = window.location.hostname;
   if (host !== "localhost" && host !== "127.0.0.1") {
-    return `http://${host}:9205`;
+    return `https://workoutapi.tombrace.co.uk`;
   }
   
   // Default to localhost for local development
