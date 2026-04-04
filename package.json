@@ -1,13 +1,13 @@
 {
-  "name": "footybee-new",
+  "name": "workout-new",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "install-all": "npm i && cd backend && npm install && cd ../frontend && npm install",
     "dev": "cd ./frontend && npm run dev & cd ./backend && npm run dev",
-    "start": "cd ./backend && pm2 start npm --name \"footybee-backend\" -- start && cd ../frontend && pm2 start npm --name \"footybee-frontend\" -- start",
-    "stop": "pm2 stop footybee-backend && pm2 stop footybee-frontend && pm2 delete footybee-backend && pm2 delete footybee-frontend",
+    "start": "cd ./backend && pm2 start npm --name \"workout-backend\" -- start && cd ../frontend && pm2 start npm --name \"workout-frontend\" -- start",
+    "stop": "pm2 stop workout-backend && pm2 stop workout-frontend && pm2 delete workout-backend && pm2 delete workout-frontend",
     "restart": "git pull && npm run stop && npm run start"
   },
   "author": "",
