@@ -1,4 +1,4 @@
-import exercisesData from "../../../free-exercise-db/dist/exercises.json";
+import exercisesData from "../../../exercise-data/exercises.json";
 import {
   Exercise,
   Equipment,
@@ -12,7 +12,13 @@ import {
 } from "./exerciseTypes";
 
 // Re-export types for convenience
-export type { Exercise, Equipment, Muscle, WorkoutType, Location } from "./exerciseTypes";
+export type {
+  Exercise,
+  Equipment,
+  Muscle,
+  WorkoutType,
+  Location,
+} from "./exerciseTypes";
 
 // Cache the exercises on module load
 let exercisesCache: Exercise[] | null = null;
@@ -28,30 +34,27 @@ export function getExerciseById(id: string): Exercise | undefined {
   return getAllExercises().find((e) => e.id === id);
 }
 
-export function filterExercisesByEquipment(
-  equipment: Equipment[]
-): Exercise[] {
+export function filterExercisesByEquipment(equipment: Equipment[]): Exercise[] {
   return getAllExercises().filter((e) =>
-    equipment.includes(e.equipment as Equipment)
+    equipment.includes(e.equipment as Equipment),
   );
 }
 
 export function filterExercisesByMuscles(muscles: Muscle[]): Exercise[] {
   return getAllExercises().filter((e) =>
-    e.primaryMuscles.some((m) => muscles.includes(m))
+    e.primaryMuscles.some((m) => muscles.includes(m)),
   );
 }
 
 export function filterExercisesByLocation(location: Location): Exercise[] {
-  const allowedEquipment =
-    location === "home" ? HOME_EQUIPMENT : GYM_EQUIPMENT;
+  const allowedEquipment = location === "home" ? HOME_EQUIPMENT : GYM_EQUIPMENT;
   return filterExercisesByEquipment(allowedEquipment);
 }
 
 export function getExercisesForWorkout(
   workoutType: WorkoutType,
   location: Location,
-  excludeIds: string[] = []
+  excludeIds: string[] = [],
 ): Exercise[] {
   // Filter by location (home or gym equipment)
   let exercises = filterExercisesByLocation(location);
@@ -59,7 +62,7 @@ export function getExercisesForWorkout(
   // Filter by workout type muscle groups
   const targetMuscles = WORKOUT_MUSCLES[workoutType];
   exercises = exercises.filter((e) =>
-    e.primaryMuscles.some((m) => targetMuscles.includes(m))
+    e.primaryMuscles.some((m) => targetMuscles.includes(m)),
   );
 
   // Filter out excluded exercises
@@ -87,7 +90,7 @@ export function getExerciseWithImages(exercise: Exercise) {
   return {
     ...exercise,
     imageUrls: exercise.images.map(
-      (_, i) => `${EXERCISE_IMAGE_BASE}/${exercise.id}/${i}.jpg`
+      (_, i) => `${EXERCISE_IMAGE_BASE}/${exercise.id}/${i}.jpg`,
     ),
   };
 }
@@ -102,22 +105,21 @@ export function getReplacementExercise(
   originalExercise: Exercise,
   location: Location,
   excludeIds: string[] = [],
-  excludeEquipment: string[] = []
+  excludeEquipment: string[] = [],
 ): Exercise | undefined {
-  const allowedEquipment =
-    location === "home" ? HOME_EQUIPMENT : GYM_EQUIPMENT;
+  const allowedEquipment = location === "home" ? HOME_EQUIPMENT : GYM_EQUIPMENT;
 
   // Get all exercises
   const allExercises = getAllExercises();
 
   // Filter by muscle group
   let candidates = allExercises.filter((e) =>
-    e.primaryMuscles.some((m) => originalExercise.primaryMuscles.includes(m))
+    e.primaryMuscles.some((m) => originalExercise.primaryMuscles.includes(m)),
   );
 
   // Filter by allowed equipment
   candidates = candidates.filter((e) =>
-    allowedEquipment.includes(e.equipment as Equipment)
+    allowedEquipment.includes(e.equipment as Equipment),
   );
 
   // Exclude original exercise
@@ -129,7 +131,7 @@ export function getReplacementExercise(
   // If we have excludeEquipment, prefer different equipment
   if (excludeEquipment.length > 0) {
     const withDifferentEquipment = candidates.filter(
-      (e) => !excludeEquipment.includes(e.equipment || "")
+      (e) => !excludeEquipment.includes(e.equipment || ""),
     );
     if (withDifferentEquipment.length > 0) {
       candidates = withDifferentEquipment;
