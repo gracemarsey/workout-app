@@ -1,4 +1,5 @@
 import { eq, and } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import { db } from "..";
 import {
   completedWorkouts,
@@ -6,7 +7,6 @@ import {
   userDismissedEquipment,
   InsertCompletedWorkout,
 } from "../schema";
-import { v4 as uuidv4 } from "uuid";
 
 // Save a completed workout
 export async function saveCompletedWorkout(
@@ -59,7 +59,7 @@ export async function saveExercisePreferences(
     await db
       .insert(userExercisePreferences)
       .values({
-        id: uuidv4(),
+        id: randomUUID(),
         userId,
         exerciseId,
         preferredReps: reps,
@@ -91,7 +91,7 @@ export async function saveDismissedEquipment(
     await db
       .insert(userDismissedEquipment)
       .values({
-        id: uuidv4(),
+        id: randomUUID(),
         userId,
         equipmentType,
         dismissedAt: new Date().toISOString(),

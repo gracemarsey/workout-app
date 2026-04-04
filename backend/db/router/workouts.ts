@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { randomUUID } from "crypto";
 import { Router } from "./types";
 import {
   generateWorkout,
@@ -11,7 +12,6 @@ import {
   saveDismissedEquipment,
 } from "../repositories/workouts";
 import { WorkoutType as WorkoutTypeEnum } from "../schema/completedWorkouts";
-import { v4 as uuidv4 } from "uuid";
 
 interface GenerateWorkoutBody {
   userId: string;
@@ -105,7 +105,7 @@ export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) =>
       try {
         // Save the completed workout
         await saveCompletedWorkout({
-          id: workoutId || uuidv4(),
+          id: workoutId || randomUUID(),
           userId,
           workoutType: type as WorkoutTypeEnum,
           location,
