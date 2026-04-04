@@ -14,7 +14,11 @@ server.register(jwt, {
 
 // Enable CORS for mobile access
 server.register(cors, {
-  origin: true,
+  origin: [
+    "http://workout.tombrace.co.uk",
+    "https://workout.tombrace.co.uk",
+    "http://localhost:9204",
+  ],
   credentials: true,
 });
 
