@@ -8,6 +8,39 @@ import { Home } from "./pages/Home";
 import { Workouts } from "./pages/Workouts";
 import { WorkoutDetail } from "./pages/WorkoutDetail";
 import { Progress } from "./pages/Progress";
+import { useRegisterSW } from "virtual:pwa-register/react";
+
+// PWA Update prompt component
+const PWARefreshPrompt: React.FC = () => {
+  const {
+    needRefresh: [needRefresh, setNeedRefresh],
+    updateServiceWorker,
+  } = useRegisterSW();
+
+  if (needRefresh) {
+    return (
+      <div className="fixed top-0 left-0 right-0 bg-orange-500 text-white p-4 z-50 flex items-center justify-between">
+        <span>New version available!</span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => updateServiceWorker(true)}
+            className="px-4 py-2 bg-white text-orange-500 rounded-lg font-medium"
+          >
+            Update
+          </button>
+          <button
+            onClick={() => setNeedRefresh(false)}
+            className="px-4 py-2 bg-transparent text-white border border-white rounded-lg font-medium"
+          >
+            Later
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
 
 const queryClient = new QueryClient();
 
@@ -89,6 +122,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ToastProvider>
+          <PWARefreshPrompt />
           <ScrollToTop />
           <Layout>
             <Routes>
