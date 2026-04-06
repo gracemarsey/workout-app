@@ -1,4 +1,4 @@
-import exercisesData from "../../exercise-data/exercises.json";
+import exercisesData from "../../../exercise-data/exercises.json";
 import {
   Exercise,
   Equipment,
