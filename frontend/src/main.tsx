@@ -8,6 +8,7 @@ import { Home } from "./pages/Home";
 import { Workouts } from "./pages/Workouts";
 import { WorkoutDetail } from "./pages/WorkoutDetail";
 import { Progress } from "./pages/Progress";
+import { Login } from "./pages/Login";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 // PWA Update prompt component
@@ -126,6 +127,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <ScrollToTop />
           <Layout>
             <Routes>
+              <Route path="/login" element={<Login />} />
               <Route path="/" element={<Home />} />
               <Route path="/workouts" element={<Workouts />} />
               <Route path="/workouts/:type" element={<WorkoutDetail />} />

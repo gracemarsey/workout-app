@@ -6,7 +6,10 @@
     "build": "vite build",
     "start": "npm run build && vite preview",
     "preview": "vite preview",
-    "ladle": "BROWSER=\"arc\" npx ladle serve"
+    "ladle": "BROWSER=\"arc\" npx ladle serve",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@ladle/react": "^4.0.2",
@@ -18,6 +21,7 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^25.5.0",
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.10",
