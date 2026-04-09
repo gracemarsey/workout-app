@@ -65,18 +65,23 @@ export type Location = "home" | "gym";
 // Equipment allowed for home workouts
 export const HOME_EQUIPMENT: Equipment[] = ["dumbbell", "bands", "body only"];
 
-// Gym equipment (all available)
+// Gym equipment - Your specific gym equipment
+// Equipment available: 2 cross trainers, 2 rowing machines, 3 treadmills, 2 stationery bikes,
+// 1 stairmaster, 1 box, 1 chest fly machine, 1 high pull and low rowing trainer,
+// dumbbells + 2 benches, a couple of standard bars, weight plates, 1 ez curl bar,
+// 1 cable machine, 2 leg press, 1 leg extension, 1 squat rack, 1 bench press machine,
+// kettlebells, resistance bands, exercise ball
 export const GYM_EQUIPMENT: Equipment[] = [
   "dumbbell",
-  "bands",
   "body only",
-  "barbell",
+  "barbell", // includes weight plate exercises (plate rows, plate presses, etc.)
+  "e-z curl bar",
   "cable",
   "machine",
-  "e-z curl bar",
   "kettlebells",
+  "bands",
   "exercise ball",
-  "medicine ball",
+  "other", // includes box jumps and other bodyweight exercises
 ];
 
 // Muscle groups for each workout type
@@ -94,6 +99,52 @@ export const WORKOUT_MUSCLES: Record<WorkoutType, Muscle[]> = {
     "glutes",
     "calves",
     "abdominals",
+  ],
+};
+
+// Balanced muscle group targets for each workout type
+// Each workout should include exercises targeting these muscle groups
+export const BALANCED_WORKOUT_MUSCLES: Record<WorkoutType, { primary: Muscle[]; secondary: Muscle[] }> = {
+  upper: {
+    // Push/pull balanced: chest, shoulders, triceps (push) vs lats, middle back, biceps (pull)
+    primary: ["chest", "lats", "shoulders", "biceps", "triceps"],
+    secondary: ["middle back", "forearms"],
+  },
+  lower: {
+    // Balanced leg workout: quads, hamstrings, glutes, calves
+    primary: ["quadriceps", "hamstrings", "glutes"],
+    secondary: ["calves", "abdominals"],
+  },
+  full: {
+    // Full body: include all major muscle groups
+    primary: ["chest", "lats", "biceps", "triceps", "shoulders", "quadriceps", "hamstrings", "glutes"],
+    secondary: ["calves", "abdominals", "middle back"],
+  },
+};
+
+// Minimum exercises per primary muscle group for balanced workouts
+export const MIN_EXERCISES_PER_MUSCLE: Record<WorkoutType, number> = {
+  upper: 1,   // At least 1 exercise targeting chest, lats, shoulders, biceps, or triceps
+  lower: 1,   // At least 1 exercise targeting quads, hamstrings, or glutes
+  full: 1,    // At least 1 exercise per major muscle group
+};
+
+// Targeted stretches for each workout type
+export const WORKOUT_STRETCHES: Record<WorkoutType, Array<{ name: string; targetMuscle: Muscle; duration: number }>> = {
+  upper: [
+    { name: "Chest Doorway Stretch", targetMuscle: "chest", duration: 30 },
+    { name: "Cross-Body Shoulder Stretch", targetMuscle: "shoulders", duration: 30 },
+    { name: "Tricep Overhead Stretch", targetMuscle: "triceps", duration: 30 },
+  ],
+  lower: [
+    { name: "Standing Quad Stretch", targetMuscle: "quadriceps", duration: 30 },
+    { name: "Standing Hamstring Stretch", targetMuscle: "hamstrings", duration: 30 },
+    { name: "Hip Flexor Stretch", targetMuscle: "glutes", duration: 30 },
+  ],
+  full: [
+    { name: "Chest Doorway Stretch", targetMuscle: "chest", duration: 30 },
+    { name: "Standing Quad Stretch", targetMuscle: "quadriceps", duration: 30 },
+    { name: "Hip Flexor Stretch", targetMuscle: "glutes", duration: 30 },
   ],
 };
 

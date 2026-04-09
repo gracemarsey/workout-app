@@ -22,8 +22,8 @@ export interface WorkoutExercise {
   instructions: string[];
   equipment: string;
   completed: boolean;
-  isWarmup?: boolean;
-  isCooldown?: boolean;
+  isStretch?: boolean;
+  targetMuscle?: string;
 }
 
 export interface GeneratedWorkout {
@@ -31,6 +31,7 @@ export interface GeneratedWorkout {
   type: "upper" | "lower" | "full";
   location: "home" | "gym";
   exercises: WorkoutExercise[];
+  stretches: WorkoutExercise[];
   weekNumber: number;
   cycleNumber: number;
 }

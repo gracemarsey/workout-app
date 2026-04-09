@@ -110,25 +110,24 @@ export const WorkoutDetail: React.FC = () => {
 
   const handleDismissExercise = (exercise: WorkoutExercise, reason: "not_available" | "dont_feel_like_it") => {
     dismissExercise.mutate(
-      { userId: "demo_user", exercise, reason, location: store.location },
+      { 
+        userId: "demo_user", 
+        exercise, 
+        reason, 
+        location: store.location,
+        currentWorkoutExercises: currentWorkout?.exercises.filter(e => !e.isStretch) || []
+      },
       {
         onSuccess: (data) => {
           if (data?.replacement) {
-            const key = `${workoutType}${store.location}`;
-            const state = store[key as keyof typeof store] as { workout: any } | undefined;
+            const updatedExercises: WorkoutExercise[] = currentWorkout?.exercises.map((ex: WorkoutExercise) => {
+              if (ex.exerciseId === exercise.exerciseId && data.replacement) {
+                return data.replacement;
+              }
+              return ex;
+            }) || [];
             
-            if (state?.workout) {
-              const updatedExercises = state.workout.exercises.map((ex: WorkoutExercise) => {
-                if (ex.exerciseId === exercise.exerciseId) {
-                  return data.replacement;
-                }
-                return ex;
-              });
-              
-              const newWorkout = { ...state.workout, exercises: updatedExercises };
-              store.setWorkout(newWorkout);
-            }
-            
+            store.setWorkout({ ...currentWorkout!, exercises: updatedExercises });
             showToast(`Swapped to ${data.replacement.name}`, "success");
           } else {
             showToast("No replacement found for this exercise", "info");
@@ -150,9 +149,10 @@ export const WorkoutDetail: React.FC = () => {
     }, 0);
   };
 
-  const completedCount = currentWorkout?.exercises.filter(e => e.completed).length ?? 0;
-  const totalCount = currentWorkout?.exercises.length ?? 0;
-  const allComplete = currentWorkout?.exercises.every(e => e.completed) ?? false;
+  const mainExercises = currentWorkout?.exercises.filter(e => !e.isStretch) ?? [];
+  const completedCount = mainExercises.filter(e => e.completed).length ?? 0;
+  const totalCount = mainExercises.length ?? 0;
+  const allComplete = mainExercises.every(e => e.completed) ?? false;
 
   const getTitle = () => workoutType === "upper" ? "Upper Body" : workoutType === "lower" ? "Lower Body" : "Full Body";
   const getIcon = () => workoutType === "upper" ? "💪" : workoutType === "lower" ? "🦵" : "🔥";
@@ -262,25 +262,10 @@ export const WorkoutDetail: React.FC = () => {
 
         {currentWorkout && (
           <div className="space-y-4">
-            {currentWorkout.exercises.filter(e => e.isWarmup).length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">🔥 Warmup</h3>
-                {currentWorkout.exercises.filter(e => e.isWarmup).map((ex, i) => (
-                  <ExerciseItem
-                    key={ex.exerciseId}
-                    exercise={ex}
-                    index={i}
-                    onUpdate={(updates) => handleExerciseUpdate(ex.exerciseId, updates.completed ?? false)}
-                    onDismiss={handleDismissExercise}
-                  />
-                ))}
-              </div>
-            )}
-
-            {currentWorkout.exercises.filter(e => !e.isWarmup && !e.isCooldown).length > 0 && (
+            {mainExercises.length > 0 && (
               <div className="space-y-2">
                 <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">💪 Main Workout</h3>
-                {currentWorkout.exercises.filter(e => !e.isWarmup && !e.isCooldown).map((ex, i) => (
+                {mainExercises.map((ex, i) => (
                   <ExerciseItem
                     key={ex.exerciseId}
                     exercise={ex}
@@ -292,10 +277,10 @@ export const WorkoutDetail: React.FC = () => {
               </div>
             )}
 
-            {currentWorkout.exercises.filter(e => e.isCooldown).length > 0 && (
+            {currentWorkout.stretches && currentWorkout.stretches.length > 0 && (
               <div className="space-y-2">
-                <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">🧘 Cooldown</h3>
-                {currentWorkout.exercises.filter(e => e.isCooldown).map((ex, i) => (
+                <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">🧘 Stretches</h3>
+                {currentWorkout.stretches.map((ex, i) => (
                   <ExerciseItem
                     key={ex.exerciseId}
                     exercise={ex}

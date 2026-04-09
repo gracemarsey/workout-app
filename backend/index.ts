@@ -12,13 +12,9 @@ server.register(jwt, {
   secret: "ArcticLegoHuskySquaredle",
 });
 
-// Enable CORS for mobile access
+// Enable CORS for mobile access - allow all origins in development
 server.register(cors, {
-  origin: [
-    "http://workout.tombrace.co.uk",
-    "https://workout.tombrace.co.uk",
-    "http://localhost:9204",
-  ],
+  origin: true,
   credentials: true,
 });
 

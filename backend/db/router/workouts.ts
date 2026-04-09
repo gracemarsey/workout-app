@@ -33,12 +33,14 @@ interface DismissExerciseBody {
   exercise: WorkoutExercise;
   reason: "not_available" | "dont_feel_like_it";
   location: "home" | "gym";
+  currentWorkoutExercises?: WorkoutExercise[];
 }
 
 interface ReplacementBody {
   exercise: WorkoutExercise;
   location: "home" | "gym";
   excludeIds: string[];
+  currentWorkoutExercises?: WorkoutExercise[];
 }
 
 export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) => {
@@ -66,7 +68,7 @@ export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) =>
   fastify.post<{ Body: ReplacementBody }>(
     "/replacement",
     async (request, reply) => {
-      const { exercise, location, excludeIds } = request.body;
+      const { exercise, location, excludeIds, currentWorkoutExercises } = request.body;
 
       if (!exercise) {
         return reply.status(400).send({ error: "Missing exercise" });
@@ -76,6 +78,7 @@ export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) =>
         const replacement = generateReplacementExercise(
           exercise,
           location,
+          currentWorkoutExercises || [],
           excludeIds
         );
 
@@ -142,30 +145,26 @@ export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) =>
   fastify.post<{ Body: DismissExerciseBody }>(
     "/dismiss",
     async (request, reply) => {
-      const { userId, exercise, reason, location } = request.body;
+      const { userId, exercise, reason, location, currentWorkoutExercises } = request.body;
 
       if (!userId || !exercise || !reason) {
         return reply.status(400).send({ error: "Missing required fields" });
       }
 
       try {
+        // Save dismissed equipment if reason is not_available
         if (reason === "not_available") {
-          const replacement = generateReplacementExercise(
-            exercise,
-            location,
-            [exercise.exerciseId],
-            [exercise.equipment]
-          );
-          return reply.send({ dismissed: true, reason, replacement });
-        } else {
-          const replacement = generateReplacementExercise(
-            exercise,
-            location,
-            [exercise.exerciseId],
-            []
-          );
-          return reply.send({ dismissed: true, reason, replacement });
+          await saveDismissedEquipment(userId, exercise.equipment);
         }
+
+        const replacement = generateReplacementExercise(
+          exercise,
+          location,
+          currentWorkoutExercises || [],
+          [exercise.exerciseId],
+          reason === "not_available" ? [exercise.equipment] : []
+        );
+        return reply.send({ dismissed: true, reason, replacement });
       } catch (error) {
         console.error("Error dismissing exercise:", error);
         return reply.status(500).send({ error: "Failed to dismiss exercise" });

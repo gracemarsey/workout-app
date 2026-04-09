@@ -8,6 +8,7 @@ import {
   HOME_EQUIPMENT,
   GYM_EQUIPMENT,
   WORKOUT_MUSCLES,
+  BALANCED_WORKOUT_MUSCLES,
   EXERCISE_IMAGE_BASE,
 } from "./exerciseTypes";
 
@@ -79,6 +80,115 @@ export function getExercisesForWorkout(
   return exercises;
 }
 
+// Get stretching exercises for a specific muscle group
+export function getStretchingExercises(targetMuscle: Muscle): Exercise[] {
+  return getAllExercises().filter((e) =>
+    e.category === "stretching" && e.primaryMuscles.includes(targetMuscle)
+  );
+}
+
+// Get balanced exercises ensuring all major muscle groups are represented
+export function getBalancedExercises(
+  workoutType: WorkoutType,
+  location: Location,
+  excludeIds: string[] = [],
+  dismissedEquipment: string[] = []
+): Exercise[] {
+  const balancedTargets = BALANCED_WORKOUT_MUSCLES[workoutType];
+  const primaryMuscles = balancedTargets.primary;
+  
+  // Filter by location
+  let exercises = filterExercisesByLocation(location);
+  
+  // Filter by workout type muscle groups
+  exercises = exercises.filter((e) =>
+    e.primaryMuscles.some((m) => primaryMuscles.includes(m)),
+  );
+  
+  // Filter out excluded exercises
+  if (excludeIds.length > 0) {
+    exercises = exercises.filter((e) => !excludeIds.includes(e.id));
+  }
+  
+  // Filter out dismissed equipment
+  if (dismissedEquipment.length > 0) {
+    exercises = exercises.filter(
+      (e) => !dismissedEquipment.includes(e.equipment as string)
+    );
+  }
+  
+  // Filter out cardio (except for full body)
+  if (workoutType !== "full") {
+    exercises = exercises.filter((e) => e.category !== "cardio");
+  }
+  
+  // Group exercises by primary muscle
+  const exercisesByMuscle = new Map<Muscle, Exercise[]>();
+  for (const muscle of primaryMuscles) {
+    exercisesByMuscle.set(
+      muscle,
+      exercises.filter((e) => e.primaryMuscles.includes(muscle))
+    );
+  }
+  
+  // For upper body, ensure push/pull balance
+  // For lower body, ensure quads/hamstrings/glutes balance
+  const result: Exercise[] = [];
+  
+  // Determine target counts per muscle group based on workout type
+  const targetCounts = getTargetMuscleCounts(workoutType);
+  
+  for (const [muscle, count] of Object.entries(targetCounts)) {
+    const muscleExercises = exercisesByMuscle.get(muscle as Muscle) || [];
+    // Shuffle and take the required number
+    const shuffled = muscleExercises.sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, count);
+    result.push(...selected);
+  }
+  
+  // Shuffle the final result to randomize order
+  return result.sort(() => Math.random() - 0.5);
+}
+
+// Get target exercise counts per muscle group for balanced workouts
+function getTargetMuscleCounts(workoutType: WorkoutType): Record<string, number> {
+  switch (workoutType) {
+    case "upper":
+      // Push/pull balance: chest+shoulders+triceps (push) vs lats+biceps (pull)
+      return {
+        chest: 1,
+        lats: 1,
+        shoulders: 1,
+        biceps: 1,
+        triceps: 1,
+        "middle back": 0, // secondary, not targeted
+      };
+    case "lower":
+      // Balanced leg workout
+      return {
+        quadriceps: 2,
+        hamstrings: 1,
+        glutes: 1,
+        calves: 1,
+      };
+    case "full":
+      // Full body - all major groups
+      return {
+        chest: 1,
+        lats: 1,
+        shoulders: 1,
+        biceps: 1,
+        triceps: 1,
+        quadriceps: 1,
+        hamstrings: 1,
+        glutes: 1,
+        abdominals: 1,
+      };
+    default:
+      return {};
+  }
+}
+
 export function getExerciseImageUrl(exercise: Exercise, index = 0): string {
   if (exercise.images && exercise.images[index]) {
     return `${EXERCISE_IMAGE_BASE}/${exercise.images[index]}`;
@@ -106,15 +216,17 @@ export function getReplacementExercise(
   location: Location,
   excludeIds: string[] = [],
   excludeEquipment: string[] = [],
+  requiredMuscles?: Muscle[],
 ): Exercise | undefined {
   const allowedEquipment = location === "home" ? HOME_EQUIPMENT : GYM_EQUIPMENT;
 
   // Get all exercises
   const allExercises = getAllExercises();
 
-  // Filter by muscle group
+  // Filter by required muscles (for maintaining balance) or original exercise's muscles
+  const targetMuscles = requiredMuscles || originalExercise.primaryMuscles;
   let candidates = allExercises.filter((e) =>
-    e.primaryMuscles.some((m) => originalExercise.primaryMuscles.includes(m)),
+    e.primaryMuscles.some((m) => targetMuscles.includes(m)),
   );
 
   // Filter by allowed equipment
@@ -128,7 +240,7 @@ export function getReplacementExercise(
   // Exclude given IDs
   candidates = candidates.filter((e) => !excludeIds.includes(e.id));
 
-  // If we have excludeEquipment, prefer different equipment
+  // Prefer different equipment if possible (for variety)
   if (excludeEquipment.length > 0) {
     const withDifferentEquipment = candidates.filter(
       (e) => !excludeEquipment.includes(e.equipment || ""),
@@ -137,6 +249,9 @@ export function getReplacementExercise(
       candidates = withDifferentEquipment;
     }
   }
+
+  // Filter out cardio exercises for strength workouts
+  candidates = candidates.filter((e) => e.category !== "cardio");
 
   if (candidates.length === 0) {
     return undefined;

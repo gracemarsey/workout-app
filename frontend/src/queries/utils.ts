@@ -2,15 +2,18 @@ import axios, { AxiosRequestConfig } from "axios";
 
 // Get API base URL - uses environment variable or localhost for dev
 const getApiBaseUrl = () => {
-  // If VITE_API_URL is set (for mobile/remote access), use it
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const host = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // For known production domains, use the same domain for API
+  const knownDomains = ["workout.tombrace.co.uk", "tombrace.co.uk"];
+  if (knownDomains.includes(host)) {
+    return `${protocol}//${host}`;
   }
   
-  // Check if we're accessing via network IP (not localhost)
-  const host = window.location.hostname;
-  if (host !== "localhost" && host !== "127.0.0.1") {
-    return `https://workoutapi.tombrace.co.uk`;
+  // Use VITE_API_URL if set (for mobile/tablet on local network)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
   
   // Default to localhost for local development
@@ -20,13 +23,29 @@ const getApiBaseUrl = () => {
 export const apiRequest = async <T>(
   url: string,
   options: AxiosRequestConfig = {}
-) => {
+): Promise<T> => {
+  const baseUrl = getApiBaseUrl();
+  const fullUrl = `${baseUrl}/api${url}`;
+  
+  // Log the request for debugging
+  console.log(`API Request: ${options.method || 'GET'} ${fullUrl}`);
+  
   try {
-    const baseUrl = getApiBaseUrl();
-    const response = await axios<T>(`${baseUrl}/api${url}`, options);
+    const response = await axios<T>(fullUrl, options);
     return response.data;
-  } catch (error) {
-    console.error("API Error:", error);
+  } catch (error: unknown) {
+    // Enhanced error logging
+    if (axios.isAxiosError(error)) {
+      console.error(`API Error [${error.response?.status || 'Network'}]:`, {
+        url: fullUrl,
+        method: options.method || 'GET',
+        status: error.response?.status,
+        message: error.message,
+        code: error.code,
+      });
+    } else {
+      console.error("API Error:", error);
+    }
     throw error;
   }
 };

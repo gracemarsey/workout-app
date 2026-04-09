@@ -11,9 +11,17 @@ import {
   getExerciseWithImages,
   getReplacementExercise,
   getExerciseById,
+  getStretchingExercises,
+  getBalancedExercises,
   type Exercise,
 } from "./exercises";
-import { WorkoutType, Location } from "./exerciseTypes";
+import { 
+  WorkoutType, 
+  Location, 
+  BALANCED_WORKOUT_MUSCLES, 
+  WORKOUT_STRETCHES,
+  Muscle 
+} from "./exerciseTypes";
 import { WorkoutType as WorkoutTypeEnum } from "../schema/completedWorkouts";
 
 export interface WorkoutExercise {
@@ -25,8 +33,8 @@ export interface WorkoutExercise {
   instructions: string[];
   equipment: string;
   completed: boolean;
-  isWarmup?: boolean;
-  isCooldown?: boolean;
+  isStretch?: boolean;
+  targetMuscle?: Muscle;
 }
 
 export interface GeneratedWorkout {
@@ -34,97 +42,10 @@ export interface GeneratedWorkout {
   type: WorkoutType;
   location: Location;
   exercises: WorkoutExercise[];
+  stretches: WorkoutExercise[];
   weekNumber: number;
   cycleNumber: number;
 }
-
-// Warmup exercises
-const WARMUP_EXERCISES: Omit<WorkoutExercise, "completed">[] = [
-  {
-    exerciseId: "warmup_jumping_jacks",
-    name: "Jumping Jacks",
-    reps: 30,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isWarmup: true,
-  },
-  {
-    exerciseId: "warmup_arm_circles",
-    name: "Arm Circles",
-    reps: 20,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isWarmup: true,
-  },
-  {
-    exerciseId: "warmup_leg_swings",
-    name: "Leg Swings",
-    reps: 10,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isWarmup: true,
-  },
-  {
-    exerciseId: "warmup_bodyweight_squats",
-    name: "Bodyweight Squats (Warmup)",
-    reps: 15,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isWarmup: true,
-  },
-];
-
-// Cooldown exercises
-const COOLDOWN_EXERCISES: Omit<WorkoutExercise, "completed">[] = [
-  {
-    exerciseId: "cooldown_childs_pose",
-    name: "Child's Pose",
-    reps: 30,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isCooldown: true,
-  },
-  {
-    exerciseId: "cooldown_standing_quad_stretch",
-    name: "Standing Quad Stretch",
-    reps: 30,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isCooldown: true,
-  },
-  {
-    exerciseId: "cooldown_hamstring_stretch",
-    name: "Standing Hamstring Stretch",
-    reps: 30,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isCooldown: true,
-  },
-  {
-    exerciseId: "cooldown_chest_opener",
-    name: "Chest Opener Stretch",
-    reps: 30,
-    weight: 0,
-    imageUrls: [],
-    instructions: [],
-    equipment: "body only",
-    isCooldown: true,
-  },
-];
 
 // Get the start of the current week (Monday)
 export function getWeekStart(): Date {
@@ -249,7 +170,7 @@ function calculateProgressiveOverload(
   return { reps: baseReps, weight: baseWeight };
 }
 
-// Generate a workout with variety
+// Generate a workout with balanced muscle distribution
 export async function generateWorkout(
   userId: string,
   workoutType: WorkoutType,
@@ -264,22 +185,17 @@ export async function generateWorkout(
   // Get dismissed equipment
   const dismissedEquipment = await getDismissedEquipment(userId);
 
-  // Get available exercises
-  let availableExercises = getExercisesForWorkout(
+  // Get balanced exercises for the workout type
+  const balancedTargets = BALANCED_WORKOUT_MUSCLES[workoutType];
+  let availableExercises = getBalancedExercises(
     workoutType,
     location,
-    recentExerciseIds
+    recentExerciseIds,
+    dismissedEquipment
   );
 
-  // Filter out dismissed equipment
-  if (dismissedEquipment.length > 0) {
-    availableExercises = availableExercises.filter(
-      (e) => !dismissedEquipment.includes(e.equipment as string)
-    );
-  }
-
-  // Select random exercises for the workout (5-8 exercises)
-  const exerciseCount = Math.floor(Math.random() * 4) + 5; // 5-8
+  // Select 6-8 exercises for a balanced workout
+  const exerciseCount = Math.floor(Math.random() * 3) + 6; // 6-8 exercises
   const selectedExercises: Exercise[] = [];
 
   while (selectedExercises.length < exerciseCount && availableExercises.length > 0) {
@@ -310,52 +226,51 @@ export async function generateWorkout(
         instructions: exercise.instructions,
         equipment: exercise.equipment || "body only",
         completed: false,
+        targetMuscle: exercise.primaryMuscles[0],
       };
     })
   );
 
-  // Select 2 random warmup exercises
-  const warmupCount = 2;
-  const shuffledWarmups = [...WARMUP_EXERCISES].sort(() => Math.random() - 0.5);
-  const selectedWarmups = shuffledWarmups.slice(0, warmupCount).map((ex) => ({
-    ...ex,
-    completed: false,
-  }));
+  // Generate 2-3 targeted stretches based on workout type
+  const stretchTemplates = WORKOUT_STRETCHES[workoutType];
+  const stretchCount = Math.floor(Math.random() * 2) + 2; // 2-3 stretches
+  const shuffledStretches = [...stretchTemplates].sort(() => Math.random() - 0.5);
+  const selectedStretchTemplates = shuffledStretches.slice(0, stretchCount);
 
-  // Select 2 random cooldown exercises
-  const cooldownCount = 2;
-  const shuffledCooldowns = [...COOLDOWN_EXERCISES].sort(() => Math.random() - 0.5);
-  const selectedCooldowns = shuffledCooldowns.slice(0, cooldownCount).map((ex) => ({
-    ...ex,
+  const stretches: WorkoutExercise[] = selectedStretchTemplates.map((stretch) => ({
+    exerciseId: `stretch_${stretch.name.toLowerCase().replace(/\s+/g, "_")}`,
+    name: stretch.name,
+    reps: 1,
+    weight: 0,
+    imageUrls: [],
+    instructions: [`Hold stretch for ${stretch.duration} seconds on each side`],
+    equipment: "body only",
     completed: false,
+    isStretch: true,
+    targetMuscle: stretch.targetMuscle,
   }));
-
-  // Combine: warmups + main exercises + cooldowns
-  const allExercises: WorkoutExercise[] = [
-    ...selectedWarmups,
-    ...mainExercises,
-    ...selectedCooldowns,
-  ];
 
   return {
     id: `workout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     type: workoutType,
     location,
-    exercises: allExercises,
+    exercises: mainExercises,
+    stretches,
     weekNumber: weekInCycle,
     cycleNumber,
   };
 }
 
-// Get a replacement exercise after dismissal
+// Get a replacement exercise after dismissal - maintains workout balance
 export function generateReplacementExercise(
   originalExercise: WorkoutExercise,
   location: Location,
-  excludeIds: string[],
+  currentWorkoutExercises: WorkoutExercise[],
+  excludeIds: string[] = [],
   excludeEquipment: string[] = []
 ): WorkoutExercise | null {
-  // Don't try to replace warmup/cooldown exercises
-  if (originalExercise.isWarmup || originalExercise.isCooldown) {
+  // Don't try to replace stretch exercises
+  if (originalExercise.isStretch) {
     return null;
   }
 
@@ -366,6 +281,22 @@ export function generateReplacementExercise(
     return null;
   }
   
+  // Get current muscle coverage in the workout to maintain balance
+  const muscleCoverage = new Map<Muscle, number>();
+  for (const ex of currentWorkoutExercises) {
+    if (ex.isStretch) continue;
+    const exData = getExerciseById(ex.exerciseId);
+    if (exData) {
+      for (const muscle of exData.primaryMuscles) {
+        muscleCoverage.set(muscle, (muscleCoverage.get(muscle) || 0) + 1);
+      }
+    }
+  }
+
+  // Check if the original muscle group would become under-represented
+  const originalMuscleCount = muscleCoverage.get(originalExerciseData.primaryMuscles[0]) || 0;
+  const needsSameMuscleGroup = originalMuscleCount <= 1;
+
   const replacement = getReplacementExercise(
     {
       id: originalExercise.exerciseId,
@@ -382,7 +313,8 @@ export function generateReplacementExercise(
     },
     location,
     excludeIds,
-    excludeEquipment
+    excludeEquipment,
+    needsSameMuscleGroup ? originalExerciseData.primaryMuscles : undefined
   );
 
   if (!replacement) {
@@ -400,5 +332,6 @@ export function generateReplacementExercise(
     instructions: replacement.instructions,
     equipment: replacement.equipment || "body only",
     completed: false,
+    targetMuscle: replacement.primaryMuscles[0],
   };
 }
