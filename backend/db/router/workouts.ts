@@ -56,10 +56,18 @@ export const buildWorkoutRoutes: Router = (fastify: FastifyInstance, _, done) =>
 
       try {
         const workout = await generateWorkout(userId, type, location);
+        
+        // Validate the workout has exercises
+        if (!workout.exercises || workout.exercises.length === 0) {
+          console.error("Generated workout has no exercises");
+          return reply.status(500).send({ error: "Failed to generate workout: no exercises available" });
+        }
+        
         return reply.send(workout);
       } catch (error) {
         console.error("Error generating workout:", error);
-        return reply.status(500).send({ error: "Failed to generate workout" });
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        return reply.status(500).send({ error: `Failed to generate workout: ${errorMessage}` });
       }
     }
   );

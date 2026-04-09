@@ -40,10 +40,17 @@ export const WorkoutDetail: React.FC = () => {
       { userId: "demo_user", type: workoutType, location: store.location },
       { 
         onSuccess: (data) => {
+          console.log("Workout generated:", data);
           store.setWorkout(data);
         }, 
-        onError: () => {
-          showToast("Failed to generate workout", "error");
+        onError: (error: unknown) => {
+          console.error("Failed to generate workout:", error);
+          let errorMessage = "Failed to generate workout";
+          if (error && typeof error === 'object' && 'response' in error) {
+            const axiosError = error as { response?: { data?: { error?: string } } };
+            errorMessage = axiosError.response?.data?.error || errorMessage;
+          }
+          showToast(errorMessage, "error");
           setHasGenerated(false);
         } 
       }
@@ -231,7 +238,6 @@ export const WorkoutDetail: React.FC = () => {
             onPause={store.pauseTimer}
             onResume={store.resumeTimer}
             onStop={store.stopTimer}
-            onTick={() => {}}
           />
 
           <div className="mt-4">

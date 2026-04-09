@@ -131,8 +131,6 @@ export function getBalancedExercises(
     );
   }
   
-  // For upper body, ensure push/pull balance
-  // For lower body, ensure quads/hamstrings/glutes balance
   const result: Exercise[] = [];
   
   // Determine target counts per muscle group based on workout type
@@ -140,10 +138,21 @@ export function getBalancedExercises(
   
   for (const [muscle, count] of Object.entries(targetCounts)) {
     const muscleExercises = exercisesByMuscle.get(muscle as Muscle) || [];
-    // Shuffle and take the required number
+    // Shuffle and take the required number (or fewer if not enough available)
     const shuffled = muscleExercises.sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, count);
+    const selected = shuffled.slice(0, Math.max(count, 1)); // At least 1 if available
     result.push(...selected);
+  }
+  
+  // If we don't have enough exercises, add more from available pool
+  const minExercises = workoutType === "lower" ? 5 : 6;
+  if (result.length < minExercises) {
+    const usedIds = new Set(result.map(e => e.id));
+    const additionalExercises = exercises
+      .filter(e => !usedIds.has(e.id))
+      .sort(() => Math.random() - 0.5)
+      .slice(0, minExercises - result.length);
+    result.push(...additionalExercises);
   }
   
   // Shuffle the final result to randomize order
