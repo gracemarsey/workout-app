@@ -6,6 +6,10 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "outDir": "./dist"
+  },
+  "include": ["**/*", "../exercise-data/**/*.json"],
+  "exclude": ["node_modules", "dist"]
 }
