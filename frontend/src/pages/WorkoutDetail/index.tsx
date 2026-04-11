@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkoutTimer } from "../../components/WorkoutTimer";
 import { WorkoutProgress } from "../../components/WorkoutProgress";
 import { ExerciseItem } from "../../components/ExerciseItem";
 import { LocationSelector } from "../../components/LocationSelector";
-import { useWorkoutStore, useCurrentWorkout } from "../../zustand/workoutStore";
+import { useWorkoutStore, useCurrentWorkout, WorkoutData } from "../../zustand/workoutStore";
 import { useGenerateWorkout } from "../../queries/useGenerateWorkout";
 import { useCompleteWorkout } from "../../queries/useCompleteWorkout";
 import { useDismissExercise } from "../../queries/useDismissExercise";
@@ -27,35 +27,101 @@ export const WorkoutDetail: React.FC = () => {
   const [workoutCompleted, setWorkoutCompleted] = useState(false);
   const [completedDuration, setCompletedDuration] = useState(0);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const initRef = useRef(false);
 
-  // Generate workout only once when page loads
+  // Wait for store to hydrate from localStorage
   useEffect(() => {
-    if (hasGenerated) return;
-    if (generateWorkout.isLoading) return;
+    // Check if store has hydrated by looking for persisted data
+    const checkHydration = () => {
+      const currentKey = `${workoutType}${store.location}`;
+      const existingWorkout = (store as any)[currentKey] as WorkoutData | undefined;
+      const timerActive = store.timerState.activeWorkoutKey === currentKey &&
+                          (store.timerState.isRunning || store.timerState.accumulatedSeconds > 0);
+      
+      // If we have an active workout, hydration is complete
+      if (existingWorkout?.workout || timerActive) {
+        setIsHydrated(true);
+        return true;
+      }
+      
+      // If no active timer, we're hydrated (just no saved workout)
+      if (store.timerState.activeWorkoutKey === null) {
+        setIsHydrated(true);
+        return true;
+      }
+      
+      return false;
+    };
+
+    // Try immediately and then check periodically
+    if (!checkHydration()) {
+      const interval = setInterval(() => {
+        if (checkHydration()) {
+          clearInterval(interval);
+        }
+      }, 50);
+      
+      // Timeout after 2 seconds - assume hydration failed
+      setTimeout(() => {
+        clearInterval(interval);
+        setIsHydrated(true);
+      }, 2000);
+      
+      return () => clearInterval(interval);
+    }
+    
+    return undefined;
+  }, [workoutType, store.location]);
+
+  // Generate workout only once when page loads and store is hydrated
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (initRef.current) return;
+    initRef.current = true;
+    
+    const currentKey = `${workoutType}${store.location}`;
+    
+    // Check if there's already an active workout in the store (loaded from localStorage)
+    const existingWorkout = (store as any)[currentKey] as WorkoutData | undefined;
+    const hasActiveTimer = store.timerState.activeWorkoutKey === currentKey &&
+                           (store.timerState.isRunning || store.timerState.accumulatedSeconds > 0);
+    
+    // If timer is running or paused, always preserve the existing workout
+    if (existingWorkout?.workout && hasActiveTimer) {
+      console.log("Preserving existing workout - timer is active", { workoutName: existingWorkout.workout.name });
+      setHasGenerated(true);
+      setWorkoutCompleted(false);
+      return;
+    }
     
     setHasGenerated(true);
     setWorkoutCompleted(false);
     
-    generateWorkout.mutate(
-      { userId: "demo_user", type: workoutType, location: store.location },
-      { 
-        onSuccess: (data) => {
-          console.log("Workout generated:", data);
-          store.setWorkout(data);
-        }, 
-        onError: (error: unknown) => {
-          console.error("Failed to generate workout:", error);
-          let errorMessage = "Failed to generate workout";
-          if (error && typeof error === 'object' && 'response' in error) {
-            const axiosError = error as { response?: { data?: { error?: string } } };
-            errorMessage = axiosError.response?.data?.error || errorMessage;
-          }
-          showToast(errorMessage, "error");
-          setHasGenerated(false);
-        } 
-      }
-    );
-  }, [workoutType]);
+    // Only generate if no existing workout
+    if (!existingWorkout?.workout) {
+      console.log("Generating new workout - no existing workout");
+      generateWorkout.mutate(
+        { userId: "demo_user", type: workoutType, location: store.location },
+        { 
+          onSuccess: (data) => {
+            console.log("Workout generated:", data);
+            store.setWorkout(data);
+          }, 
+          onError: (error: unknown) => {
+            console.error("Failed to generate workout:", error);
+            let errorMessage = "Failed to generate workout";
+            if (error && typeof error === 'object' && 'response' in error) {
+              const axiosError = error as { response?: { data?: { error?: string } } };
+              errorMessage = axiosError.response?.data?.error || errorMessage;
+            }
+            showToast(errorMessage, "error");
+            setHasGenerated(false);
+          } 
+        }
+      );
+    }
+  }, [isHydrated, workoutType, store.location]);
 
   // Update workout type in store
   useEffect(() => {
@@ -65,12 +131,16 @@ export const WorkoutDetail: React.FC = () => {
   // Handle workout completion
   useEffect(() => {
     if (currentWorkout && !workoutCompleted && !generateWorkout.isLoading) {
-      const allComplete = currentWorkout.exercises.every((e) => e.completed);
-      if (allComplete) {
+      const mainExercises = currentWorkout.exercises.filter(e => !e.isStretch);
+      const stretches = currentWorkout.stretches || [];
+      const allMainComplete = mainExercises.every((e) => e.completed);
+      const allStretchComplete = stretches.every((e) => e.completed);
+      
+      if (allMainComplete && allStretchComplete) {
         handleWorkoutComplete();
       }
     }
-  }, [currentWorkout?.exercises]);
+  }, [currentWorkout?.exercises, currentWorkout?.stretches]);
 
   const handleWorkoutComplete = () => {
     if (!currentWorkout) return;
@@ -157,9 +227,12 @@ export const WorkoutDetail: React.FC = () => {
   };
 
   const mainExercises = currentWorkout?.exercises.filter(e => !e.isStretch) ?? [];
+  const stretches = currentWorkout?.stretches ?? [];
   const completedCount = mainExercises.filter(e => e.completed).length ?? 0;
   const totalCount = mainExercises.length ?? 0;
-  const allComplete = mainExercises.every(e => e.completed) ?? false;
+  const allMainComplete = mainExercises.every(e => e.completed) ?? false;
+  const allStretchComplete = stretches.length === 0 || stretches.every(e => e.completed);
+  const allComplete = allMainComplete && allStretchComplete;
 
   const getTitle = () => workoutType === "upper" ? "Upper Body" : workoutType === "lower" ? "Lower Body" : "Full Body";
   const getIcon = () => workoutType === "upper" ? "💪" : workoutType === "lower" ? "🦵" : "🔥";
