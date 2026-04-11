@@ -8,7 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg", "icon-16.png", "icon-32.png", "apple-touch-icon.png"],
+      includeAssets: [
+        "icon.svg",
+        "icon-16.png",
+        "icon-32.png",
+        "apple-touch-icon.png",
+      ],
       manifest: {
         name: "Workout App",
         short_name: "Workout",
